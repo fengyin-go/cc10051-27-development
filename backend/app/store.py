@@ -4,19 +4,28 @@
 """
 from __future__ import annotations
 
+import copy
 from typing import Any
 
 from app.seed import SEED_ROWS
 
+# 对账工作台的内部表不是独立业务模块，不计入模块清单/概览卡片。
+INTERNAL_TABLES = {"golden_registry", "recon_package", "recon_disagreement"}
+
 
 class Store:
     def __init__(self) -> None:
+        self._seed = copy.deepcopy(SEED_ROWS)
         self._tables: dict[str, list[dict[str, Any]]] = {
-            name: [dict(row) for row in rows] for name, rows in SEED_ROWS.items()
+            name: copy.deepcopy(rows) for name, rows in SEED_ROWS.items()
         }
 
+    def reset(self) -> None:
+        """恢复到种子场景（含 CRM-7→G9/G11 对账演练数据）。"""
+        self._tables = {name: copy.deepcopy(rows) for name, rows in self._seed.items()}
+
     def module_names(self) -> list[str]:
-        return sorted(self._tables)
+        return sorted(name for name in self._tables if name not in INTERNAL_TABLES)
 
     def rows(self, module: str) -> list[dict[str, Any]]:
         return self._tables.setdefault(module, [])

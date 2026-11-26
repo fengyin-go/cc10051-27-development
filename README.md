@@ -79,5 +79,43 @@ npm run dev
 - 列表接口统一返回 `{ items, total, page, size }`，动作接口统一返回 `{ ok, message }`。
 - 状态流转只允许在 `app/services` 里改，路由层不做业务判断。
 
+## 标识交叉映射 · 对账下载与回传确认
+
+`id_cross_map` 模块内置完整对账闭环，种子数据即题目场景：
+
+- `CRM-7→G9`（旧边 `edge-CRM-7-G9` 已失效，映射已撤回）随后合法更正为
+  `CRM-7→G11`（新边 `edge-CRM-7-G11` 已登记、金记录有发布资格）；
+  `CRM-8→G12` 仍有效；`ERP-3→G11` 与 CRM 共用金记录，用于验证来源隔离。
+- 原发出批次 `REC-20261120-CRM-V1`（唯一映射依据 `MAP-202611-CRM@v1`，含 G9 旧档），
+  更正后新包 `REC-20261125-CRM-V2`。
+
+页面入口（进入“标识交叉映射”即可见）：
+
+1. **对账下载**：按申请方来源导出，只含该来源实体/原标识；指定
+   `package_code=REC-20261120-CRM-V1` 可重新下载 CRM-7→G9 原档。
+2. **回传确认**：选择/粘贴填好意见的核对文件（CSV/JSON/无表头均可），先预览
+   “一条已变化 + 一条仍有效”，再确认登记；相符意见自动标记 **已作用到关系**，
+   变化行保持 **待确认** 并登记分歧。
+3. **对账批次**：展示实际采纳的意见、意见状态（关页重开仍保留）与实际关联的原发出批次；
+   同一文件重复提交时分歧按指纹只登记/确认一次。
+4. **从血缘入口继续分歧处置**：跳转“血缘关系图”，并列核对文件所指旧边与当前可用新边，
+   可 **沿原凭证对历史结账**（旧边保留结账凭证）或 **换用新包**（意见作用到 G11 新边）。
+
+主要接口：
+
+```text
+GET  /api/id_cross_map/reconciliation/state
+GET  /api/id_cross_map/reconciliation/download?source=CRM[&package_code=...]
+POST /api/id_cross_map/reconciliation/preview      # JSON / 裸CSV / form / multipart
+POST /api/id_cross_map/reconciliation/commit       # /return、/upload 为别名
+POST /api/id_cross_map/reconciliation/adopt-opinion
+POST /api/id_cross_map/reconciliation/disagreements/{code}/handle
+GET  /api/id_cross_map/actual-golden?source_id=CRM-7
+GET  /api/lineage_graph/reconciliation-trace?source_id=CRM-7&delivered_golden=G9
+POST /api/lineage_graph/verify-reimport
+POST /api/id_cross_map/scenario/reset              # 一键恢复种子演练场景
+```
+
+
 领域：数据工程
 子方向：数仓与数据湖

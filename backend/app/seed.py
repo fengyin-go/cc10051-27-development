@@ -545,3 +545,8 @@ SEED_ROWS: dict[str, list[dict[str, Any]]] = {
   '生效版本': '参考数据管理样例3',
   '映射规则': '参考数据管理样例3'}]
 }
+
+# 追加“标识交叉映射 · 对账回传”场景数据（CRM-7→G9/G11 更正、来源隔离等）。
+from app.scenario_data import install_scenario  # noqa: E402
+
+install_scenario(SEED_ROWS)
